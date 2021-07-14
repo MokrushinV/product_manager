@@ -1,18 +1,21 @@
 package com.product.entities;
 
-import java.math.BigDecimal;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.Table;
 
 import com.product.entities.enums.ProductType;
 
+/**
+ * Product is an entity that represents product of different
+ * types that could be sold
+ * @author Mokrushin Vladimir
+ *
+ */
 @Entity
-@Table (name = "products")
 public class Product {
 
 	@Id
@@ -26,5 +29,45 @@ public class Product {
 	@Enumerated(EnumType.STRING)
 	private ProductType productType;
 	
-	private BigDecimal price;
+	private Long price;
+	
+	/**
+	 * The default constructor exists only for the sake of JPA
+	 */
+	protected Product() {}
+	
+	public Product (String sku, String name, ProductType productType, Long price) {
+		this.sku = sku;
+		this.name = name;
+		this.productType = productType;
+		this.price = price;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format(
+				"Product[id = %d, sku = %s, name = %s, productType = %s, price = %d]",
+				id, sku, name, productType, price);
+	}
+	
+	public Long getId() {
+		return id;
+	}
+	
+	public String getSku() {
+		return sku;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public ProductType getProductType() {
+		return productType;
+	}
+	
+	public Long getPrice() {
+		return price;
+	}
+	
 }
