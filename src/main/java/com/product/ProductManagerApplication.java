@@ -34,10 +34,10 @@ public class ProductManagerApplication {
 			BigDecimal d3 = new BigDecimal(200.00).setScale(2, RoundingMode.HALF_DOWN);
 			BigDecimal d4 = new BigDecimal(700.00).setScale(2, RoundingMode.HALF_DOWN);
 			
-			repository.save(new Product("g001", "Awesome Game", ProductType.GAME, d1));
-			repository.save(new Product("g002", "Awesome Game 2", ProductType.GAME, d2));
-			repository.save(new Product("gc001", "Crystall", ProductType.GAME_CURRENCY, d3));
-			repository.save(new Product("S001", "Awesome T-shirt", ProductType.SHIRT, d4));
+			repository.save(new Product("Awesome Game", ProductType.GAME, d1));
+			repository.save(new Product("Awesome Game 2", ProductType.GAME, d2));
+			repository.save(new Product("Crystall", ProductType.GAME_CURRENCY, d3));
+			repository.save(new Product("Awesome T-shirt", ProductType.SHIRT, d4));
 			
 			//get preloaded products
 			log.info("Products found with findAll():");
@@ -57,10 +57,10 @@ public class ProductManagerApplication {
 			log.info("------------------------------");
 			
 			//get products by sku
-			log.info("Product found with findBySku(\"g002\"):");
+			log.info("Product found with findBySku(\"1Awe0P1000\"):");
 			log.info("---------------------------------------");
-			repository.findBySku("g002").forEach(product_g002 -> {
-				log.info(product_g002.toString());
+			repository.findBySku("1AWEGAM21P1500").forEach(productSku -> {
+				log.info(productSku.toString());
 			});
 			log.info("---------------------------------------");
 		};

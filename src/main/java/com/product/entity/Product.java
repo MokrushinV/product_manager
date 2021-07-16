@@ -2,6 +2,8 @@ package com.product.entity;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -20,6 +22,8 @@ import com.product.entity.enums.ProductType;
 @Entity
 public class Product {
 
+	private static AtomicLong skuCounter = new AtomicLong();
+	
 	@Id
 	@GeneratedValue
 	private Long id;
@@ -38,17 +42,18 @@ public class Product {
 	 */
 	protected Product() {}
 	
-	public Product (String sku, String name, ProductType productType, BigDecimal price) {
-		this.sku = sku;
+	public Product (String name, ProductType productType, BigDecimal price) {
 		this.name = name;
 		this.productType = productType;
 		this.price = price;
+		setSku(this, name, productType, price);
 	}
 	
 	@Override
 	public String toString() {
 		return String.format(
-				"Product[id = %d, sku = %s, name = %s, productType = %s, price = " + this.getPrice().toString() + "]",
+				"Product[id = %d, sku = %s, name = %s, productType = %s, price = " +
+						this.getPrice().toString() + "]",
 				id, sku, name, productType, price);
 	}
 	
@@ -72,8 +77,8 @@ public class Product {
 		return price;
 	}
 	
-	public void setSku(String sku) {
-		this.sku = sku;
+	public static void setSku(Product product, String name, ProductType productType, BigDecimal price) {
+		product.sku = generateSku(product, name, productType, price);
 	}
 	
 	public void setName(String name) {
@@ -86,6 +91,49 @@ public class Product {
 	
 	public void setPrice(BigDecimal price) {
 		this.price = price;
+	}
+	
+	private static String generateSku(Product product, String name, ProductType productType, BigDecimal price) {
+		String result = "";
+		String afterSpace = name;
+		int end = name.indexOf(' ');
+		
+		if (end == -1) {
+			end = name.length() - 1;
+		}
+		
+		do {	
+			String beforeSpace = afterSpace.substring(0,end);
+			
+			if (beforeSpace.length() > 3) {
+				result += beforeSpace.substring(0, 3).toUpperCase();
+			} else {
+				result += beforeSpace.substring(0, 1).toUpperCase();
+			}
+			
+			if (end + 1 < name.length()) {
+				afterSpace = afterSpace.substring(end+1);
+			} else {
+				break;
+			}
+				
+			end = afterSpace.indexOf(' ');
+			
+			if (end == -1) {
+				if (afterSpace.length() > 3) {
+					result += afterSpace.substring(0, 3).toUpperCase();
+				} else {
+					result += afterSpace.substring(0, 1).toUpperCase();
+				}
+				break;
+			}
+		} while (end != -1);
+		
+		String sku = skuCounter.getAndIncrement() + 
+					 result +
+					 productType.ordinal() +
+					 "P" + price.setScale(0,RoundingMode.HALF_DOWN).toString();
+		return sku;
 	}
 	
 }
