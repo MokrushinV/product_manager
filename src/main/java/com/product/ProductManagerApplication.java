@@ -1,6 +1,8 @@
 package com.product;
 
 import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +11,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import com.product.entities.Product;
-import com.product.entities.enums.ProductType;
-import com.product.repositories.ProductRepository;
+import com.product.entity.Product;
+import com.product.entity.enums.ProductType;
+import com.product.repository.ProductRepository;
 
 @SpringBootApplication
 public class ProductManagerApplication {
@@ -27,10 +29,15 @@ public class ProductManagerApplication {
 	public CommandLineRunner generalTest(ProductRepository repository) {
 		return (args) -> {
 			//loading sample data
-			repository.save(new Product("g001", "Awesome Game", ProductType.GAME, 100000L));
-			repository.save(new Product("g002", "Awesome Game 2", ProductType.GAME, 150000L));
-			repository.save(new Product("gc001", "Crystall", ProductType.GAME_CURRENCY, 20000L));
-			repository.save(new Product("S001", "Awesome T-shirt", ProductType.SHIRT, 70000L));
+			BigDecimal d1 = new BigDecimal(1000.00).setScale(2, RoundingMode.HALF_DOWN);
+			BigDecimal d2 = new BigDecimal(1500.00).setScale(2, RoundingMode.HALF_DOWN);
+			BigDecimal d3 = new BigDecimal(200.00).setScale(2, RoundingMode.HALF_DOWN);
+			BigDecimal d4 = new BigDecimal(700.00).setScale(2, RoundingMode.HALF_DOWN);
+			
+			repository.save(new Product("g001", "Awesome Game", ProductType.GAME, d1));
+			repository.save(new Product("g002", "Awesome Game 2", ProductType.GAME, d2));
+			repository.save(new Product("gc001", "Crystall", ProductType.GAME_CURRENCY, d3));
+			repository.save(new Product("S001", "Awesome T-shirt", ProductType.SHIRT, d4));
 			
 			//get preloaded products
 			log.info("Products found with findAll():");
