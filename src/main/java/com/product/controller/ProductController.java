@@ -93,6 +93,20 @@ public class ProductController {
 	
 	@PostMapping ("/products")
 	public ResponseEntity<?> newProduct(@RequestBody Product newProduct) {
+		
+		//Checking if such a product already exists (that's probably should be done by another function)
+		List<Product> sameProducts = repository.findByNameAndProductTypeAndPrice (newProduct.getName(),
+			    newProduct.getProductType(),
+			    newProduct.getPrice());
+		if ( !sameProducts.isEmpty()) {
+			EntityModel<Product> productModel = assembler.toModel(sameProducts.get(0));
+			return ResponseEntity
+					.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+					.header("Products already contains such product", "Consider changing Name, Type or Price")
+					.body(productModel);
+		}
+		
+		//adding new entity
 		EntityModel<Product> productModel = assembler.toModel(repository.saveAndFlush(newProduct));
 		return ResponseEntity
 				.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -101,6 +115,20 @@ public class ProductController {
 	
 	@PutMapping ("/products/{id}")
 	public ResponseEntity<?> editProduct(@RequestBody Product newProduct, @PathVariable Long id) {
+		
+		//Checking if such a product already exists (that's probably should be done by another function)
+		List<Product> sameProducts = repository.findByNameAndProductTypeAndPrice (newProduct.getName(),
+			    newProduct.getProductType(),
+			    newProduct.getPrice());
+		if ( !sameProducts.isEmpty()) {
+			EntityModel<Product> productModel = assembler.toModel(sameProducts.get(0));
+			return ResponseEntity
+					.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+					.header("Products already contains such product", "Consider changing Name, Type or Price")
+					.body(productModel);
+		}
+		
+		//editing existing entity
 		Product editedProduct = repository.findById(id)
 				.map (product -> {
 					product.setName(newProduct.getName());

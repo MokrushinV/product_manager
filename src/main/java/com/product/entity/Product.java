@@ -131,7 +131,7 @@ public class Product {
 		
 		String sku = skuCounter.getAndIncrement() + 
 					 result +
-					 productType.ordinal() +
+					 "T" + productType.ordinal() +
 					 "P" + price.setScale(0,RoundingMode.HALF_DOWN).toString();
 		return sku;
 	}

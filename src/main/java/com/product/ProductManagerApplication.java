@@ -57,10 +57,20 @@ public class ProductManagerApplication {
 			log.info("------------------------------");
 			
 			//get products by sku
-			log.info("Product found with findBySku(\"1Awe0P1000\"):");
+			log.info("Product found with findBySku(\"1AWEGAM2T1P1500\"):");
 			log.info("---------------------------------------");
-			repository.findBySku("1AWEGAM21P1500").forEach(productSku -> {
+			repository.findBySku("1AWEGAM2T1P1500").forEach(productSku -> {
 				log.info(productSku.toString());
+			});
+			log.info("---------------------------------------");
+			
+			// checking if product with the given name, productType and price already exists
+			log.info("Product found with same parameters as the first product");
+			log.info("---------------------------------------");
+			repository.findByNameAndProductTypeAndPrice("Awesome Game",
+														ProductType.GAME,
+														d1).forEach(productExisted -> {
+				log.info(productExisted.toString());
 			});
 			log.info("---------------------------------------");
 		};
