@@ -22,7 +22,7 @@ public class ProductModelAssembler implements RepresentationModelAssembler<Produ
 		
 		return EntityModel.of(product,
 				linkTo (methodOn (ProductController.class).getProductById(product.getId())).withSelfRel(),
-				linkTo (methodOn (ProductController.class).getAllProducts()).withRel("Products"),
+				linkTo (methodOn (ProductController.class).getAllProducts(null,null,null)).withRel("Products"),
 				linkTo (methodOn (ProductController.class).deleteProductByIdWeb(product.getId())).withRel("Delete"));
 	}
 

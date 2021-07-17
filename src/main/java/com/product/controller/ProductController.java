@@ -5,11 +5,11 @@ import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +17,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.product.assembler.ProductModelAssembler;
 import com.product.entity.Product;
 import com.product.exception.ProductNotFoundException;
 import com.product.repository.ProductRepository;
+import com.product.service.ProductService;
 
 /**
  * API end-point for product management.
@@ -32,53 +34,28 @@ import com.product.repository.ProductRepository;
 @RestController
 public class ProductController {
 	
-	private final ProductRepository repository;
-	private final ProductModelAssembler assembler;
+	@Autowired
+	private ProductRepository repository;
 	
-	ProductController (ProductRepository repository, ProductModelAssembler assembler) {
-		this.repository = repository;
-		this.assembler = assembler;
-	}
+	@Autowired
+	private ProductModelAssembler assembler;
+	
+	@Autowired
+	private ProductService service;
 	
 	//--------GET operations
 	
 	@GetMapping ("/products")
-	public CollectionModel <EntityModel<Product>> getAllProducts() {
-		
-		List <EntityModel<Product>> products = repository.findAll().stream()
-				.map (assembler::toModel)
+	public CollectionModel<EntityModel<Product>> getAllProducts(
+								@RequestParam(defaultValue = "0") Integer pageNo,
+								@RequestParam(defaultValue = "7") Integer pageSize,
+								@RequestParam(defaultValue = "id") String sortBy) {										
+		List <EntityModel<Product>> products = service.getAllProducts(pageNo, pageSize, sortBy).stream()
+				.map(assembler::toModel)
 				.collect(Collectors.toList());
 		
 		return CollectionModel.of(products,
-				linkTo(methodOn(ProductController.class).getAllProducts()).withSelfRel(),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withRel("Sorted by price"),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withRel("Sorted by product type"));
-	}
-	
-	@GetMapping ("/products/sortedByPrice")
-	public CollectionModel <EntityModel<Product>> getAllProductsSortedByPrice() {
-		
-		List <EntityModel <Product>> products = repository.findAll(Sort.by(Sort.Direction.ASC, "price")).stream()
-				.map (assembler::toModel)
-				.collect(Collectors.toList());
-		
-		return CollectionModel.of(products,
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withSelfRel(),
-				linkTo(methodOn(ProductController.class).getAllProducts()).withRel("All products"),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withRel("Sorted by product type"));
-	}
-	
-	@GetMapping ("/products/sortedByType")
-	public CollectionModel <EntityModel<Product>> getAllProductsSortedByType() {
-		
-		List <EntityModel <Product>> products = repository.findAll(Sort.by(Sort.Direction.ASC, "productType")).stream()
-				.map (assembler::toModel)
-				.collect(Collectors.toList());
-		return CollectionModel.of(products,
-				
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withSelfRel(),
-				linkTo(methodOn(ProductController.class).getAllProducts()).withRel("All products"),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withRel("Sorted by name"));
+				linkTo(methodOn(ProductController.class).getAllProducts(pageNo, pageSize, sortBy)).withSelfRel());
 	}	
 	
 	@GetMapping ("/products/{id}")
@@ -100,29 +77,40 @@ public class ProductController {
 	@GetMapping ("/products/delete/{id}") //works for web-app
 	public ResponseEntity<?> deleteProductByIdWeb(@PathVariable Long id) {
 		
-		if (repository.findById(id).isEmpty()) {
-			throw new ProductNotFoundException(id);
-		}
+		Product product = repository.findById(id).orElseThrow( () -> new ProductNotFoundException(id));
+		Link mainMenuLink = assembler.toModel(product).getRequiredLink("Products");
+		
 		repository.deleteById(id);
-		return ResponseEntity.status(HttpStatus.OK).build();
+		return ResponseEntity
+				.created(mainMenuLink.toUri())
+				.header("Product has been deleted", "OK")
+				.body(mainMenuLink);
 	}
 	
 	@DeleteMapping ("/products/{id}") //works for console
 	public ResponseEntity<?> deleteProductByIdConsole(@PathVariable Long id) {
 		
-		if (repository.findById(id).isEmpty()) {
-			throw new ProductNotFoundException(id);
-		}
+		Product product = repository.findById(id).orElseThrow( () -> new ProductNotFoundException(id));
+		Link mainMenuLink = assembler.toModel(product).getRequiredLink("Products");
+		
 		repository.deleteById(id);
-		return ResponseEntity.status(HttpStatus.OK).build();
+		return ResponseEntity
+				.created(mainMenuLink.toUri())
+				.header("Product has been deleted", "OK")
+				.body(mainMenuLink);
 	}
 	
-	@DeleteMapping ("/products/sku/{sku}") //works for console
+	@DeleteMapping ("/products/sku/{sku}")
 	public ResponseEntity<?> deleteProductBySkuConsole(@PathVariable String sku) {
 		
 		Product product = repository.findBySku(sku).orElseThrow( () -> new ProductNotFoundException(sku));
+		Link mainMenuLink = assembler.toModel(product).getRequiredLink("Products");
+		
 		repository.deleteById(product.getId());
-		return ResponseEntity.status(HttpStatus.OK).build();
+		return ResponseEntity
+				.created(mainMenuLink.toUri())
+				.header("Product has been deleted", "OK")
+				.body(mainMenuLink);
 	}
 	
 	//--------POST operations
@@ -137,9 +125,9 @@ public class ProductController {
 		if ( !sameProducts.isEmpty()) {
 			EntityModel<Product> productModel = assembler.toModel(sameProducts.get(0));
 			return ResponseEntity
-					.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
-					.header("Products already contains such product", "Consider changing Name, Type or Price")
-					.body(productModel);
+				.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+				.header("Products already contains such product", "Consider changing Name, Type or Price")
+				.body(productModel);
 		}
 		
 		//adding new entity
