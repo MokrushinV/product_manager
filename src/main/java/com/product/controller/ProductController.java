@@ -107,6 +107,7 @@ public class ProductController {
 		}
 		
 		//adding new entity
+		Product.setSku(newProduct, newProduct.getName(), newProduct.getProductType(), newProduct.getPrice());//crutch
 		EntityModel<Product> productModel = assembler.toModel(repository.saveAndFlush(newProduct));
 		return ResponseEntity
 				.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -134,6 +135,7 @@ public class ProductController {
 					product.setName(newProduct.getName());
 					product.setProductType(newProduct.getProductType());
 					product.setPrice(newProduct.getPrice());
+					Product.setSku(product, product.getName(), product.getProductType(), product.getPrice());//crutch
 					return repository.saveAndFlush(product);
 				})
 				.orElseThrow ( () -> new ProductNotFoundException(id));
