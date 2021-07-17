@@ -51,19 +51,19 @@ public class ProductController {
 		
 		return CollectionModel.of(products,
 				linkTo(methodOn(ProductController.class).getAllProducts()).withSelfRel(),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByName()).withRel("Sorted by name"),
+				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withRel("Sorted by price"),
 				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withRel("Sorted by product type"));
 	}
 	
-	@GetMapping ("/products/sortedByName")
-	public CollectionModel <EntityModel<Product>> getAllProductsSortedByName() {
+	@GetMapping ("/products/sortedByPrice")
+	public CollectionModel <EntityModel<Product>> getAllProductsSortedByPrice() {
 		
-		List <EntityModel <Product>> products = repository.findAll(Sort.by(Sort.Direction.ASC, "name")).stream()
+		List <EntityModel <Product>> products = repository.findAll(Sort.by(Sort.Direction.ASC, "price")).stream()
 				.map (assembler::toModel)
 				.collect(Collectors.toList());
 		
 		return CollectionModel.of(products,
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByName()).withSelfRel(),
+				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withSelfRel(),
 				linkTo(methodOn(ProductController.class).getAllProducts()).withRel("All products"),
 				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withRel("Sorted by product type"));
 	}
@@ -78,7 +78,7 @@ public class ProductController {
 				
 				linkTo(methodOn(ProductController.class).getAllProductsSortedByType()).withSelfRel(),
 				linkTo(methodOn(ProductController.class).getAllProducts()).withRel("All products"),
-				linkTo(methodOn(ProductController.class).getAllProductsSortedByName()).withRel("Sorted by name"));
+				linkTo(methodOn(ProductController.class).getAllProductsSortedByPrice()).withRel("Sorted by name"));
 	}	
 	
 	@GetMapping ("/products/{id}")
