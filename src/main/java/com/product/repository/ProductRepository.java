@@ -16,7 +16,7 @@ import com.product.entity.enums.ProductType;
  */
 public interface ProductRepository extends JpaRepository <Product, Long> {
 	
-	List<Product> findBySku (String sku);
+	Optional<Product> findBySku (String sku);
 	
 	Optional<Product> findById (Long id);
 	

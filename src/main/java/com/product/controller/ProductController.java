@@ -40,6 +40,8 @@ public class ProductController {
 		this.assembler = assembler;
 	}
 	
+	//--------GET operations
+	
 	@GetMapping ("/products")
 	public CollectionModel <EntityModel<Product>> getAllProducts() {
 		
@@ -81,15 +83,49 @@ public class ProductController {
 	
 	@GetMapping ("/products/{id}")
 	public EntityModel<Product> getProductById(@PathVariable Long id) {
+		
 		Product productToGet = repository.findById(id).orElseThrow( () -> new ProductNotFoundException(id));
 		return assembler.toModel(productToGet);
 	}
 	
-	@DeleteMapping ("/products/{id}") //works for console
-	public ResponseEntity<?> deleteProductById(@PathVariable Long id) {
+	@GetMapping ("/products/sku/{sku}")
+	public EntityModel<Product> getProductBySku(@PathVariable String sku) {
+		
+		Product productToGet = repository.findBySku(sku).orElseThrow( () -> new ProductNotFoundException(sku));
+		return assembler.toModel(productToGet);
+	}
+	
+	//--------DELETE operations
+	
+	@GetMapping ("/products/delete/{id}") //works for web-app
+	public ResponseEntity<?> deleteProductByIdWeb(@PathVariable Long id) {
+		
+		if (repository.findById(id).isEmpty()) {
+			throw new ProductNotFoundException(id);
+		}
 		repository.deleteById(id);
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
+	
+	@DeleteMapping ("/products/{id}") //works for console
+	public ResponseEntity<?> deleteProductByIdConsole(@PathVariable Long id) {
+		
+		if (repository.findById(id).isEmpty()) {
+			throw new ProductNotFoundException(id);
+		}
+		repository.deleteById(id);
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	@DeleteMapping ("/products/sku/{sku}") //works for console
+	public ResponseEntity<?> deleteProductBySkuConsole(@PathVariable String sku) {
+		
+		Product product = repository.findBySku(sku).orElseThrow( () -> new ProductNotFoundException(sku));
+		repository.deleteById(product.getId());
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+	
+	//--------POST operations
 	
 	@PostMapping ("/products")
 	public ResponseEntity<?> newProduct(@RequestBody Product newProduct) {
@@ -113,6 +149,8 @@ public class ProductController {
 				.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
 				.body(productModel);
 	}
+	
+	//--------PUT operations
 	
 	@PutMapping ("/products/{id}")
 	public ResponseEntity<?> editProduct(@RequestBody Product newProduct, @PathVariable Long id) {
@@ -139,6 +177,38 @@ public class ProductController {
 					return repository.saveAndFlush(product);
 				})
 				.orElseThrow ( () -> new ProductNotFoundException(id));
+		
+		EntityModel<Product> productModel = assembler.toModel(editedProduct);
+		return ResponseEntity
+				.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+				.body(productModel);
+	}
+	
+	@PutMapping ("/products/sku/{sku}")
+	public ResponseEntity<?> editProductBySku(@RequestBody Product newProduct, @PathVariable String sku) {
+		
+		//Checking if such a product already exists (that's probably should be done by another function)
+		List<Product> sameProducts = repository.findByNameAndProductTypeAndPrice (newProduct.getName(),
+			    newProduct.getProductType(),
+			    newProduct.getPrice());
+		if ( !sameProducts.isEmpty()) {
+			EntityModel<Product> productModel = assembler.toModel(sameProducts.get(0));
+			return ResponseEntity
+					.created(productModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+					.header("Products already contains such product", "Consider changing Name, Type or Price")
+					.body(productModel);
+		}
+		
+		//editing existing entity
+		Product editedProduct = repository.findBySku(sku)
+				.map (product -> {
+					product.setName(newProduct.getName());
+					product.setProductType(newProduct.getProductType());
+					product.setPrice(newProduct.getPrice());
+					Product.setSku(product, product.getName(), product.getProductType(), product.getPrice());//crutch
+					return repository.saveAndFlush(product);
+				})
+				.orElseThrow ( () -> new ProductNotFoundException(sku));
 		
 		EntityModel<Product> productModel = assembler.toModel(editedProduct);
 		return ResponseEntity

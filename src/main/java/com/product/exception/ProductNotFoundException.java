@@ -9,4 +9,11 @@ public class ProductNotFoundException extends RuntimeException{
 		
 	}
 
+	public ProductNotFoundException(String sku) {
+
+
+		super("Could not find product with sku: " + sku);
+		
+	}
+
 }

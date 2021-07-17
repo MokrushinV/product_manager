@@ -57,11 +57,12 @@ public class ProductManagerApplication {
 			log.info("------------------------------");
 			
 			//get products by sku
+			Optional<Product> productBySku = repository.findBySku("1AWEGAM2T1P1500");
 			log.info("Product found with findBySku(\"1AWEGAM2T1P1500\"):");
 			log.info("---------------------------------------");
-			repository.findBySku("1AWEGAM2T1P1500").forEach(productSku -> {
-				log.info(productSku.toString());
-			});
+			if (productBySku.isPresent())
+				log.info(product.toString());
+			else log.info("No such product!");
 			log.info("---------------------------------------");
 			
 			// checking if product with the given name, productType and price already exists
